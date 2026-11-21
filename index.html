@@ -1,0 +1,1742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MBA Marks-to-Percentile Calculator | CAT, NMAT, XAT, SNAP, CET</title>
+  <style>
+    /* ==========================================================================
+       Design Tokens & Base Reset (Dark Slate/Zinc Theme + Indigo/Emerald Accents)
+       ========================================================================== */
+    :root {
+      --bg-base: #09090b;
+      --bg-surface: #121216;
+      --bg-card: #18181b;
+      --bg-card-hover: #202025;
+      --bg-input: #0e0e11;
+
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-strong: rgba(255, 255, 255, 0.16);
+      --border-focus: rgba(99, 102, 241, 0.7);
+
+      --text-primary: #f4f4f5;
+      --text-secondary: #a1a1aa;
+      --text-muted: #71717a;
+
+      --accent-indigo: #6366f1;
+      --accent-indigo-light: #818cf8;
+      --accent-indigo-glow: rgba(99, 102, 241, 0.25);
+
+      --accent-emerald: #10b981;
+      --accent-emerald-light: #34d399;
+      --accent-emerald-glow: rgba(16, 185, 129, 0.2);
+
+      --accent-amber: #f59e0b;
+
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 20px;
+
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+      --shadow-card: 0 10px 30px -10px rgba(0, 0, 0, 0.65);
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      font-size: 16px;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      background-color: var(--bg-base);
+      background-image:
+        radial-gradient(circle at 15% 0%, rgba(99, 102, 241, 0.12), transparent 38%),
+        radial-gradient(circle at 85% 10%, rgba(16, 185, 129, 0.08), transparent 35%);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      line-height: 1.5;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ==========================================================================
+       Layout Container
+       ========================================================================== */
+    .app-shell {
+      width: 100%;
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 1.5rem 1rem 2.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    @media (min-width: 768px) {
+      .app-shell {
+        padding: 2.25rem 1.75rem 3rem;
+        gap: 1.5rem;
+      }
+    }
+
+    /* ==========================================================================
+       Header
+       ========================================================================== */
+    .app-header {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+    }
+
+    .brand-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent-indigo), var(--accent-emerald));
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      font-size: 0.95rem;
+      color: #fff;
+      box-shadow: 0 4px 16px var(--accent-indigo-glow);
+      flex-shrink: 0;
+    }
+
+    .app-title {
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      color: var(--text-primary);
+    }
+
+    @media (min-width: 640px) {
+      .app-title {
+        font-size: 1.6rem;
+      }
+    }
+
+    .app-subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+
+    /* ==========================================================================
+       Exam Selector Tabs
+       ========================================================================== */
+    .exam-tabs-wrapper {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 0.375rem;
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 0.35rem;
+    }
+
+    @media (max-width: 560px) {
+      .exam-tabs-wrapper {
+        display: flex;
+        overflow-x: auto;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+      }
+      .exam-tabs-wrapper::-webkit-scrollbar {
+        display: none;
+      }
+    }
+
+    .exam-tab {
+      appearance: none;
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-secondary);
+      font-family: var(--font-sans);
+      font-size: 0.875rem;
+      font-weight: 600;
+      padding: 0.7rem 0.75rem;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all 0.18s ease;
+      white-space: nowrap;
+      flex: 1 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+    }
+
+    .exam-tab:hover {
+      color: var(--text-primary);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .exam-tab.active {
+      background: linear-gradient(180deg, rgba(99, 102, 241, 0.22), rgba(99, 102, 241, 0.12));
+      border-color: rgba(129, 140, 248, 0.4);
+      color: #fff;
+      box-shadow: 0 2px 12px rgba(99, 102, 241, 0.2);
+    }
+
+    .exam-tab-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent-emerald-light);
+      display: none;
+    }
+
+    .exam-tab.active .exam-tab-dot {
+      display: inline-block;
+      box-shadow: 0 0 8px var(--accent-emerald-light);
+    }
+
+    /* ==========================================================================
+       Main Grid
+       ========================================================================== */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.25rem;
+      align-items: start;
+    }
+
+    @media (min-width: 900px) {
+      .main-grid {
+        grid-template-columns: 1.35fr 0.9fr;
+        gap: 1.5rem;
+      }
+    }
+
+    .left-column {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    /* ==========================================================================
+       Cards
+       ========================================================================== */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-xl);
+      padding: 1.25rem;
+      box-shadow: var(--shadow-card);
+    }
+
+    @media (min-width: 640px) {
+      .card {
+        padding: 1.5rem;
+      }
+    }
+
+    .card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-bottom: 1.15rem;
+    }
+
+    .card-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      letter-spacing: -0.01em;
+    }
+
+    .card-meta {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 0.15rem;
+    }
+
+    /* ==========================================================================
+       Hero Result + Input Card
+       ========================================================================== */
+    .result-hero {
+      background: linear-gradient(145deg, rgba(99, 102, 241, 0.12), rgba(16, 185, 129, 0.06));
+      border: 1px solid rgba(129, 140, 248, 0.22);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      margin-bottom: 1.35rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .result-top-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .result-label {
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--accent-indigo-light);
+    }
+
+    .tier-badge {
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.22rem 0.65rem;
+      border-radius: 999px;
+      background: rgba(16, 185, 129, 0.14);
+      color: var(--accent-emerald-light);
+      border: 1px solid rgba(52, 211, 153, 0.28);
+    }
+
+    .tier-badge.mid {
+      background: rgba(99, 102, 241, 0.16);
+      color: var(--accent-indigo-light);
+      border-color: rgba(129, 140, 248, 0.3);
+    }
+
+    .tier-badge.low {
+      background: rgba(161, 161, 170, 0.12);
+      color: var(--text-secondary);
+      border-color: rgba(161, 161, 170, 0.22);
+    }
+
+    .percentile-display {
+      display: flex;
+      align-items: baseline;
+      gap: 0.25rem;
+      line-height: 1.05;
+    }
+
+    .percentile-value {
+      font-family: var(--font-mono);
+      font-size: clamp(2.6rem, 7vw, 3.75rem);
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      background: linear-gradient(90deg, #ffffff 20%, #a5b4fc 70%, #6ee7b7 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .percentile-suffix {
+      font-family: var(--font-sans);
+      font-size: clamp(1.1rem, 2.5vw, 1.45rem);
+      font-weight: 700;
+      color: var(--text-secondary);
+    }
+
+    .historical-range {
+      font-size: 0.83rem;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      flex-wrap: wrap;
+    }
+
+    .historical-range strong {
+      font-family: var(--font-mono);
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .range-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.78rem;
+      color: var(--accent-emerald-light);
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      padding: 0.2rem 0.6rem;
+      border-radius: 999px;
+      font-weight: 500;
+    }
+
+    /* ==========================================================================
+       Marks Input & Stepper Controls
+       ========================================================================== */
+    .input-section {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .input-label-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .input-label {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .score-limits {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .score-input-group {
+      display: flex;
+      align-items: stretch;
+      gap: 0.5rem;
+    }
+
+    .stepper-btn {
+      width: 48px;
+      flex-shrink: 0;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-strong);
+      background: var(--bg-surface);
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+      font-size: 1.25rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: grid;
+      place-items: center;
+      user-select: none;
+    }
+
+    .stepper-btn:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--accent-indigo-light);
+      color: #fff;
+    }
+
+    .stepper-btn:active {
+      transform: scale(0.96);
+    }
+
+    .score-input-wrap {
+      position: relative;
+      flex: 1;
+      display: flex;
+      align-items: center;
+    }
+
+    .score-input {
+      width: 100%;
+      background: var(--bg-input);
+      border: 1.5px solid var(--border-strong);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+      font-size: 1.75rem;
+      font-weight: 700;
+      padding: 0.65rem 4.8rem 0.65rem 1rem;
+      outline: none;
+      transition: border-color 0.18s ease, box-shadow 0.18s ease;
+      -moz-appearance: textfield;
+    }
+
+    .score-input::-webkit-outer-spin-button,
+    .score-input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    .score-input:focus {
+      border-color: var(--accent-indigo);
+      box-shadow: 0 0 0 3px var(--accent-indigo-glow);
+    }
+
+    .score-max-tag {
+      position: absolute;
+      right: 1rem;
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+
+    /* ==========================================================================
+       Range Slider
+       ========================================================================== */
+    .slider-container {
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+    }
+
+    .score-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 8px;
+      border-radius: 999px;
+      background: #27272a;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .score-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #ffffff;
+      border: 3px solid var(--accent-indigo);
+      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.25), 0 2px 8px rgba(0, 0, 0, 0.5);
+      cursor: pointer;
+      transition: transform 0.12s ease, box-shadow 0.12s ease;
+    }
+
+    .score-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 0 6px rgba(99, 102, 241, 0.35), 0 2px 10px rgba(0, 0, 0, 0.6);
+    }
+
+    .score-slider::-moz-range-thumb {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #ffffff;
+      border: 3px solid var(--accent-indigo);
+      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.25), 0 2px 8px rgba(0, 0, 0, 0.5);
+      cursor: pointer;
+    }
+
+    .slider-ticks {
+      display: flex;
+      justify-content: space-between;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+
+    /* ==========================================================================
+       Difficulty 3-Way Toggle & NMAT Badge
+       ========================================================================== */
+    .difficulty-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .difficulty-label {
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    .segmented-control {
+      display: inline-grid;
+      grid-template-columns: repeat(3, 1fr);
+      background: var(--bg-input);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      padding: 3px;
+      gap: 3px;
+      width: 100%;
+    }
+
+    @media (min-width: 520px) {
+      .segmented-control {
+        width: auto;
+      }
+    }
+
+    .seg-btn {
+      appearance: none;
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      font-family: var(--font-sans);
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 0.48rem 0.75rem;
+      border-radius: 7px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .seg-btn:hover {
+      color: var(--text-primary);
+    }
+
+    .seg-btn.active {
+      background: var(--accent-indigo);
+      color: #fff;
+      box-shadow: 0 2px 8px var(--accent-indigo-glow);
+    }
+
+    .nmat-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.45rem 0.85rem;
+      border-radius: 10px;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(52, 211, 153, 0.3);
+      color: var(--accent-emerald-light);
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .nmat-badge-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--accent-emerald-light);
+      box-shadow: 0 0 8px var(--accent-emerald-light);
+    }
+
+    .exam-pattern-info {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 0.55rem 0.8rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+
+    /* ==========================================================================
+       SVG Curve Chart Card
+       ========================================================================== */
+    .chart-wrapper {
+      width: 100%;
+      position: relative;
+      user-select: none;
+    }
+
+    .chart-svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      overflow: visible;
+      cursor: crosshair;
+      touch-action: none;
+    }
+
+    .chart-legend {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      font-size: 0.74rem;
+      color: var(--text-secondary);
+      flex-wrap: wrap;
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .legend-swatch {
+      width: 12px;
+      height: 3px;
+      border-radius: 2px;
+    }
+
+    /* ==========================================================================
+       Key Benchmarks Table Card
+       ========================================================================== */
+    .benchmarks-subtitle {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .benchmark-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.38rem;
+    }
+
+    .benchmark-header-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      padding: 0.35rem 0.85rem;
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+    }
+
+    .benchmark-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      align-items: center;
+      padding: 0.7rem 0.85rem;
+      border-radius: var(--radius-md);
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      text-align: left;
+      width: 100%;
+      color: inherit;
+      font-family: inherit;
+    }
+
+    .benchmark-row:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--border-strong);
+      transform: translateX(2px);
+    }
+
+    .benchmark-row.closest {
+      background: linear-gradient(90deg, rgba(99, 102, 241, 0.18), rgba(16, 185, 129, 0.1));
+      border-color: rgba(129, 140, 248, 0.55);
+      box-shadow: 0 0 0 1px rgba(129, 140, 248, 0.25);
+    }
+
+    .bm-pct {
+      font-family: var(--font-mono);
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+
+    .bm-closest-tag {
+      font-family: var(--font-sans);
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 0.12rem 0.42rem;
+      border-radius: 999px;
+      background: var(--accent-emerald);
+      color: #052e16;
+    }
+
+    .bm-marks {
+      font-family: var(--font-mono);
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: var(--accent-indigo-light);
+    }
+
+    .benchmark-row.closest .bm-marks {
+      color: var(--accent-emerald-light);
+    }
+
+    .bm-diff {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-align: right;
+      min-width: 58px;
+    }
+
+    .bm-diff.ahead {
+      color: var(--accent-emerald-light);
+    }
+
+    .bm-diff.behind {
+      color: #fca5a5;
+    }
+
+    /* ==========================================================================
+       Footer Disclaimer
+       ========================================================================== */
+    .disclaimer {
+      text-align: center;
+      font-size: 0.76rem;
+      color: var(--text-muted);
+      padding: 0.5rem 0.5rem 0;
+      border-top: 1px solid var(--border-subtle);
+      margin-top: 0.25rem;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-top">
+        <div class="brand">
+          <div class="brand-icon" aria-hidden="true">%</div>
+          <div>
+            <h1 class="app-title">MBA Marks-to-Percentile Calculator</h1>
+            <p class="app-subtitle">Instant historical percentile estimates across CAT, NMAT, XAT, SNAP &amp; MAH MBA CET</p>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Exam Selector Tabs -->
+    <nav class="exam-tabs-wrapper" role="tablist" aria-label="Select MBA Entrance Exam" id="examTabs">
+      <button class="exam-tab active" role="tab" aria-selected="true" data-exam="CAT">
+        <span class="exam-tab-dot"></span>CAT
+      </button>
+      <button class="exam-tab" role="tab" aria-selected="false" data-exam="NMAT">
+        <span class="exam-tab-dot"></span>NMAT
+      </button>
+      <button class="exam-tab" role="tab" aria-selected="false" data-exam="XAT">
+        <span class="exam-tab-dot"></span>XAT
+      </button>
+      <button class="exam-tab" role="tab" aria-selected="false" data-exam="SNAP">
+        <span class="exam-tab-dot"></span>SNAP
+      </button>
+      <button class="exam-tab" role="tab" aria-selected="false" data-exam="CET">
+        <span class="exam-tab-dot"></span>MAH MBA CET
+      </button>
+    </nav>
+
+    <!-- Main Two-Column Content -->
+    <main class="main-grid">
+      <!-- Left Column: Calculator + Chart -->
+      <div class="left-column">
+        <!-- Calculator Card -->
+        <section class="card" aria-label="Score Input and Percentile Result">
+          <!-- Hero Result -->
+          <div class="result-hero">
+            <div class="result-top-row">
+              <span class="result-label" id="resultExamLabel">CAT Estimated Percentile</span>
+              <span class="tier-badge" id="tierBadge">Top 5%ile</span>
+            </div>
+
+            <div class="percentile-display" aria-live="polite">
+              <span class="percentile-value" id="percentileValue">95.1</span>
+              <span class="percentile-suffix">%ile</span>
+            </div>
+
+            <div class="historical-range" id="historicalRangeRow">
+              <!-- Populated dynamically -->
+            </div>
+          </div>
+
+          <!-- Score Input Controls -->
+          <div class="input-section">
+            <div class="input-label-row">
+              <label class="input-label" for="scoreInput" id="scoreInputLabel">Enter Your CAT Raw / Scaled Score</label>
+              <span class="score-limits" id="scoreLimits">Range: -20 to 204</span>
+            </div>
+
+            <div class="score-input-group">
+              <button type="button" class="stepper-btn" id="btnDecrease" aria-label="Decrease marks">&minus;</button>
+              <div class="score-input-wrap">
+                <input
+                  type="number"
+                  id="scoreInput"
+                  class="score-input"
+                  min="-20"
+                  max="204"
+                  step="1"
+                  value="63"
+                  inputmode="decimal"
+                  autocomplete="off"
+                />
+                <span class="score-max-tag" id="scoreMaxTag">/ 204</span>
+              </div>
+              <button type="button" class="stepper-btn" id="btnIncrease" aria-label="Increase marks">+</button>
+            </div>
+
+            <!-- Synced Range Slider -->
+            <div class="slider-container">
+              <input
+                type="range"
+                id="scoreSlider"
+                class="score-slider"
+                min="-20"
+                max="204"
+                step="1"
+                value="63"
+                aria-label="Score slider"
+              />
+              <div class="slider-ticks" id="sliderTicks">
+                <span>-20</span>
+                <span>40</span>
+                <span>100</span>
+                <span>150</span>
+                <span>204</span>
+              </div>
+            </div>
+
+            <!-- Difficulty Toggle OR NMAT Official Badge -->
+            <div class="difficulty-bar">
+              <span class="difficulty-label" id="difficultyLabel">Paper Difficulty Assumption</span>
+
+              <div class="segmented-control" id="difficultyToggle" role="group" aria-label="Paper difficulty">
+                <button type="button" class="seg-btn" data-diff="tough">Tough Paper</button>
+                <button type="button" class="seg-btn active" data-diff="moderate">Moderate (Avg)</button>
+                <button type="button" class="seg-btn" data-diff="easy">Easy Paper</button>
+              </div>
+
+              <div class="nmat-badge hidden" id="nmatBadge">
+                <span class="nmat-badge-dot"></span>
+                Official GMAC Adaptive Curve (2025–26)
+              </div>
+            </div>
+
+            <!-- Exam Pattern Info Bar -->
+            <div class="exam-pattern-info">
+              <span id="examPatternText">68 Qs &bull; +3 / -1 (TITA: 0) &bull; Max 204 marks</span>
+              <span id="examSourceText">Baseline: CAT 2021–2025</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- SVG Curve Visualization Card -->
+        <section class="card" aria-label="Marks versus Percentile Curve">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title" id="chartTitle">CAT Marks vs Percentile Curve</h2>
+              <p class="card-meta">Click or drag anywhere on the curve to explore scores</p>
+            </div>
+            <div class="chart-legend" id="chartLegend">
+              <span class="legend-item">
+                <span class="legend-swatch" style="background: #818cf8;"></span>Active Curve
+              </span>
+              <span class="legend-item" id="bandLegend">
+                <span class="legend-swatch" style="background: rgba(99, 102, 241, 0.35); height: 8px;"></span>Easy–Tough Band
+              </span>
+            </div>
+          </div>
+
+          <div class="chart-wrapper">
+            <svg
+              id="curveSvg"
+              class="chart-svg"
+              viewBox="0 0 640 270"
+              role="img"
+              aria-label="Interactive Marks versus Percentile Chart"
+            >
+              <defs>
+                <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#6366f1" stop-opacity="0.32" />
+                  <stop offset="100%" stop-color="#6366f1" stop-opacity="0.01" />
+                </linearGradient>
+                <linearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stop-color="#6366f1" />
+                  <stop offset="100%" stop-color="#34d399" />
+                </linearGradient>
+                <filter id="dotGlow" x="-60%" y="-60%" width="220%" height="220%">
+                  <feGaussianBlur stdDeviation="4.5" result="blur" />
+                  <feMerge>
+                    <feMergeNode in="blur" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+              </defs>
+              <!-- Dynamic SVG layers rendered via JS -->
+              <g id="svgGrid"></g>
+              <path id="svgBand" fill="rgba(99, 102, 241, 0.11)" stroke="none"></path>
+              <path id="svgArea" fill="url(#areaGrad)" stroke="none"></path>
+              <path id="svgCurve" fill="none" stroke="url(#lineGrad)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path>
+              <g id="svgMarker"></g>
+            </svg>
+          </div>
+        </section>
+      </div>
+
+      <!-- Right Column: Key Benchmarks Table -->
+      <aside class="card" aria-label="Key Percentile Benchmarks">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title" id="benchmarksTitle">CAT Key Benchmarks</h2>
+            <p class="benchmarks-subtitle">Click any row to auto-fill that score</p>
+          </div>
+        </div>
+
+        <div class="benchmark-header-row">
+          <span>Percentile</span>
+          <span>Req. Marks</span>
+          <span style="text-align: right;">vs Yours</span>
+        </div>
+
+        <div class="benchmark-list" id="benchmarkList">
+          <!-- Populated dynamically -->
+        </div>
+      </aside>
+    </main>
+
+    <!-- Disclaimer -->
+    <footer class="disclaimer">
+      Disclaimer: Percentiles are estimates derived from historical exam score-vs-percentile data; actual results vary by slot normalization, paper difficulty, and candidate pool.
+    </footer>
+  </div>
+
+  <script>
+    (function () {
+      "use strict";
+
+      /* ========================================================================
+         1. Verified Historical Exam Datasets & Configuration
+         ======================================================================== */
+      const BENCHMARK_TARGETS = [99.9, 99, 98, 95, 90, 85, 80, 70];
+
+      const EXAMS = {
+        CAT: {
+          name: "CAT",
+          fullName: "CAT",
+          min: -20,
+          max: 204,
+          step: 1,
+          defaultScore: 63,
+          hasDifficulty: true,
+          pattern: "68 Qs • +3 / -1 (TITA: 0) • Max 204 marks",
+          source: "Historical Data: CAT 2021–2025",
+          diffMeta: {
+            tough: "Tough Paper (CAT 2023 baseline)",
+            moderate: "Moderate / Avg (CAT 2025 baseline)",
+            easy: "Easy Paper (CAT 2024 baseline)"
+          },
+          curves: {
+            moderate: [
+              [-10, 1], [0, 10], [8, 25], [17, 50], [23, 60], [30, 70], [38, 80],
+              [44, 85], [51.5, 90], [62.5, 95], [71, 97], [76, 98], [85, 99],
+              [97, 99.5], [111.5, 99.9], [140, 99.99], [204, 100]
+            ],
+            tough: [
+              [-10, 1], [0, 14], [6, 30], [13, 50], [18, 60], [24, 70], [32, 80],
+              [38, 85], [44.5, 90], [55, 95], [63, 97], [68, 98], [76, 99],
+              [87, 99.5], [101.5, 99.9], [130, 99.99], [204, 100]
+            ],
+            easy: [
+              [-10, 1], [0, 8], [10, 22], [19, 50], [26, 60], [34, 70], [43, 80],
+              [50, 85], [58, 90], [70, 95], [79, 97], [85, 98], [95, 99],
+              [108, 99.5], [127, 99.9], [155, 99.99], [204, 100]
+            ]
+          }
+        },
+
+        NMAT: {
+          name: "NMAT",
+          fullName: "NMAT by GMAC",
+          min: 36,
+          max: 360,
+          step: 1,
+          defaultScore: 235,
+          hasDifficulty: false,
+          pattern: "108 Qs • Scaled Score 36–360 • No negative marking",
+          source: "Official GMAC Data (Nov 2025 – Jan 2026, N = 53,271)",
+          curves: {
+            moderate: [
+              [36, 0.5], [100, 0.9], [120, 1], [130, 2], [137, 3], [141, 4],
+              [145, 5], [149, 6], [152, 7], [157, 9], [161, 11], [166, 14],
+              [170, 17], [174, 20], [180, 25], [185, 30], [189, 35], [193, 40],
+              [197, 45], [200, 49], [201, 51], [204, 55], [207, 59], [209, 62],
+              [211, 65], [214, 69], [215, 71], [218, 74], [220, 77], [223, 80],
+              [225, 83], [227, 85], [230, 87], [232, 89], [234, 90], [237, 92],
+              [240, 94], [242.5, 95], [245, 96], [248, 97], [252, 98], [260, 99],
+              [266, 99.5], [300, 99.9], [360, 100]
+            ]
+          }
+        },
+
+        XAT: {
+          name: "XAT",
+          fullName: "XAT (Part 1)",
+          min: -10,
+          max: 75,
+          step: 0.25,
+          defaultScore: 34,
+          hasDifficulty: true,
+          pattern: "Part 1: 75 Qs • +1 / -0.25 (-0.10 after 8 unattempted) • GK excluded",
+          source: "Historical Trends: XAT 2023–2026",
+          diffMeta: {
+            tough: "Tough Paper",
+            moderate: "Moderate (Avg)",
+            easy: "Easy Paper"
+          },
+          curves: {
+            moderate: [
+              [-5, 1], [0, 10], [5, 25], [10, 50], [13.5, 60], [17.5, 70],
+              [22.5, 80], [25.5, 85], [29, 90], [34, 95], [37.5, 97], [39.5, 98],
+              [42, 99], [47, 99.5], [54, 99.9], [75, 100]
+            ],
+            tough: [
+              [-5, 1], [0, 14], [4, 30], [8, 50], [11, 60], [14.5, 70],
+              [19, 80], [22, 85], [25, 90], [30, 95], [33, 97], [34.5, 98],
+              [36.5, 99], [41, 99.5], [47, 99.9], [75, 100]
+            ],
+            easy: [
+              [-5, 1], [0, 8], [6, 22], [12, 50], [16, 60], [21, 70],
+              [27, 80], [31, 85], [35, 90], [41, 95], [45, 97], [48, 98],
+              [52, 99], [56, 99.5], [60, 99.9], [75, 100]
+            ]
+          }
+        },
+
+        SNAP: {
+          name: "SNAP",
+          fullName: "SNAP",
+          min: -10,
+          max: 60,
+          step: 0.25,
+          defaultScore: 38,
+          hasDifficulty: true,
+          pattern: "60 Qs • +1 / -0.25 • Max 60 marks",
+          source: "Historical Trends: SNAP 2021–2025",
+          diffMeta: {
+            tough: "Tough Paper",
+            moderate: "Moderate (Avg)",
+            easy: "Easy Paper"
+          },
+          curves: {
+            moderate: [
+              [-5, 1], [0, 5], [10, 25], [17, 50], [21, 60], [25, 70],
+              [29.5, 80], [32, 85], [34.5, 90], [38, 95], [40.5, 97], [42, 98],
+              [44.5, 99], [47, 99.5], [50, 99.9], [60, 100]
+            ],
+            tough: [
+              [-5, 1], [0, 8], [8, 28], [14, 50], [18, 60], [22, 70],
+              [26.5, 80], [29, 85], [32, 90], [35.5, 95], [38, 97], [39.5, 98],
+              [41.5, 99], [44, 99.5], [47, 99.9], [60, 100]
+            ],
+            easy: [
+              [-5, 1], [0, 4], [12, 22], [20, 50], [24, 60], [28.5, 70],
+              [33, 80], [36, 85], [39.5, 90], [43.5, 95], [46.5, 97], [48, 98],
+              [49.5, 99], [51.5, 99.5], [54, 99.9], [60, 100]
+            ]
+          }
+        },
+
+        CET: {
+          name: "MAH MBA CET",
+          fullName: "MAH MBA CET",
+          min: 0,
+          max: 200,
+          step: 1,
+          defaultScore: 110,
+          hasDifficulty: true,
+          pattern: "200 Qs • +1 / 0 (No negative marking) • Max 200 marks",
+          source: "Historical Trends: MAH MBA CET 2023–2026",
+          diffMeta: {
+            tough: "Tough Paper",
+            moderate: "Moderate (Avg)",
+            easy: "Easy Paper"
+          },
+          curves: {
+            moderate: [
+              [0, 0.5], [30, 15], [48, 50], [58, 60], [68, 70], [80, 80],
+              [88, 85], [97, 90], [109, 95], [117, 97], [122, 98], [130, 99],
+              [135, 99.5], [143, 99.9], [149, 99.95], [156, 99.99], [200, 100]
+            ],
+            tough: [
+              [0, 0.5], [25, 18], [42, 50], [52, 60], [62, 70], [74, 80],
+              [82, 85], [91, 90], [103, 95], [111, 97], [117, 98], [125, 99],
+              [130, 99.5], [138, 99.9], [144, 99.95], [150, 99.99], [200, 100]
+            ],
+            easy: [
+              [0, 0.5], [35, 14], [54, 50], [64, 60], [75, 70], [87, 80],
+              [95, 85], [104, 90], [115, 95], [123, 97], [128, 98], [135, 99],
+              [141, 99.5], [149, 99.9], [155, 99.95], [162, 99.99], [200, 100]
+            ]
+          }
+        }
+      };
+
+      /* ========================================================================
+         2. Application State
+         ======================================================================== */
+      const state = {
+        examKey: "CAT",
+        difficulty: "moderate",
+        scores: {
+          CAT: EXAMS.CAT.defaultScore,
+          NMAT: EXAMS.NMAT.defaultScore,
+          XAT: EXAMS.XAT.defaultScore,
+          SNAP: EXAMS.SNAP.defaultScore,
+          CET: EXAMS.CET.defaultScore
+        }
+      };
+
+      /* ========================================================================
+         3. DOM References
+         ======================================================================== */
+      const els = {
+        examTabs: document.querySelectorAll(".exam-tab"),
+        resultExamLabel: document.getElementById("resultExamLabel"),
+        tierBadge: document.getElementById("tierBadge"),
+        percentileValue: document.getElementById("percentileValue"),
+        historicalRangeRow: document.getElementById("historicalRangeRow"),
+        scoreInputLabel: document.getElementById("scoreInputLabel"),
+        scoreLimits: document.getElementById("scoreLimits"),
+        scoreInput: document.getElementById("scoreInput"),
+        scoreMaxTag: document.getElementById("scoreMaxTag"),
+        scoreSlider: document.getElementById("scoreSlider"),
+        sliderTicks: document.getElementById("sliderTicks"),
+        btnDecrease: document.getElementById("btnDecrease"),
+        btnIncrease: document.getElementById("btnIncrease"),
+        difficultyLabel: document.getElementById("difficultyLabel"),
+        difficultyToggle: document.getElementById("difficultyToggle"),
+        segButtons: document.querySelectorAll(".seg-btn"),
+        nmatBadge: document.getElementById("nmatBadge"),
+        examPatternText: document.getElementById("examPatternText"),
+        examSourceText: document.getElementById("examSourceText"),
+        chartTitle: document.getElementById("chartTitle"),
+        bandLegend: document.getElementById("bandLegend"),
+        curveSvg: document.getElementById("curveSvg"),
+        svgGrid: document.getElementById("svgGrid"),
+        svgBand: document.getElementById("svgBand"),
+        svgArea: document.getElementById("svgArea"),
+        svgCurve: document.getElementById("svgCurve"),
+        svgMarker: document.getElementById("svgMarker"),
+        benchmarksTitle: document.getElementById("benchmarksTitle"),
+        benchmarkList: document.getElementById("benchmarkList")
+      };
+
+      /* ========================================================================
+         4. Math & Piecewise-Linear Interpolation Utilities
+         ======================================================================== */
+
+      /**
+       * Clamp a number between min and max.
+       */
+      function clamp(val, min, max) {
+        return Math.min(Math.max(val, min), max);
+      }
+
+      /**
+       * Round score to the exam's valid step precision (e.g. 0.25 or 1).
+       */
+      function snapToStep(val, step) {
+        const inv = 1 / step;
+        return Math.round(val * inv) / inv;
+      }
+
+      /**
+       * Piecewise-linear interpolation: marks -> percentile.
+       * Expects points sorted ascending by marks [[m0, p0], [m1, p1], ...].
+       */
+      function interpolatePercentile(marks, points) {
+        if (!Array.isArray(points) || points.length === 0) return 0;
+        if (marks <= points[0][0]) return points[0][1];
+        const last = points[points.length - 1];
+        if (marks >= last[0]) return last[1];
+
+        for (let i = 0; i < points.length - 1; i++) {
+          const [m1, p1] = points[i];
+          const [m2, p2] = points[i + 1];
+          if (marks >= m1 && marks <= m2) {
+            if (m2 === m1) return p2;
+            const ratio = (marks - m1) / (m2 - m1);
+            return p1 + ratio * (p2 - p1);
+          }
+        }
+        return last[1];
+      }
+
+      /**
+       * Inverse piecewise-linear interpolation: target percentile -> required marks.
+       */
+      function interpolateMarks(targetPct, points) {
+        if (!Array.isArray(points) || points.length === 0) return 0;
+        if (targetPct <= points[0][1]) return points[0][0];
+        const last = points[points.length - 1];
+        if (targetPct >= last[1]) return last[0];
+
+        for (let i = 0; i < points.length - 1; i++) {
+          const [m1, p1] = points[i];
+          const [m2, p2] = points[i + 1];
+          if (targetPct >= p1 && targetPct <= p2) {
+            if (p2 === p1) return m2;
+            const ratio = (targetPct - p1) / (p2 - p1);
+            return m1 + ratio * (m2 - m1);
+          }
+        }
+        return last[0];
+      }
+
+      /**
+       * Format percentile cleanly according to precision & boundary rules:
+       * - < 1       -> "< 1"
+       * - >= 99.99  -> "99.99"
+       * - >= 99     -> 2 decimal places (e.g., "99.42")
+       * - otherwise -> 1 decimal place (e.g., "95.4")
+       */
+      function formatPercentile(pct) {
+        if (pct < 1) return "< 1";
+        if (pct >= 99.99) return "99.99";
+        if (pct >= 99) return pct.toFixed(2);
+        return pct.toFixed(1);
+      }
+
+      /**
+       * Format marks cleanly (avoid trailing .00 for integers).
+       */
+      function formatMarks(val) {
+        const rounded = Math.round(val * 100) / 100;
+        return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(2).replace(/0$/, "");
+      }
+
+      /**
+       * Return active curve points for current exam & difficulty.
+       */
+      function getActiveCurve(exam, diff) {
+        if (!exam.hasDifficulty) return exam.curves.moderate;
+        return exam.curves[diff] || exam.curves.moderate;
+      }
+
+      /**
+       * Return a helpful tier badge description based on percentile.
+       */
+      function getTierInfo(pct) {
+        if (pct >= 99) return { text: "Top 1% • Elite Tier", cls: "" };
+        if (pct >= 95) return { text: "Top 5% • Strong Tier", cls: "" };
+        if (pct >= 90) return { text: "Top 10% • Competitive", cls: "mid" };
+        if (pct >= 80) return { text: "Top 20% • Above Avg", cls: "mid" };
+        if (pct >= 50) return { text: "Top 50% • Mid Range", cls: "low" };
+        return { text: "Building Baseline", cls: "low" };
+      }
+
+      /* ========================================================================
+         5. SVG Chart Renderer & Pointer Interaction
+         ======================================================================== */
+      const CHART = {
+        width: 640,
+        height: 270,
+        padLeft: 44,
+        padRight: 20,
+        padTop: 22,
+        padBottom: 34
+      };
+
+      function scoreToX(score, min, max) {
+        const plotW = CHART.width - CHART.padLeft - CHART.padRight;
+        return CHART.padLeft + ((score - min) / (max - min)) * plotW;
+      }
+
+      function pctToY(pct) {
+        const plotH = CHART.height - CHART.padTop - CHART.padBottom;
+        return CHART.padTop + (1 - clamp(pct, 0, 100) / 100) * plotH;
+      }
+
+      function renderChart(exam, activeCurve, currentScore, currentPct) {
+        const { width, height, padLeft, padRight, padTop, padBottom } = CHART;
+        const plotW = width - padLeft - padRight;
+        const plotH = height - padTop - padBottom;
+
+        // 1. Grid lines & Axis Labels
+        let gridHtml = "";
+        const yTicks = [0, 25, 50, 75, 90, 100];
+        yTicks.forEach((pct) => {
+          const y = pctToY(pct);
+          const isHighlight = pct === 90;
+          gridHtml += `<line x1="${padLeft}" y1="${y.toFixed(1)}" x2="${width - padRight}" y2="${y.toFixed(1)}"
+            stroke="${isHighlight ? "rgba(52, 211, 153, 0.25)" : "rgba(255,255,255,0.07)"}"
+            stroke-dasharray="${isHighlight ? "4 4" : "none"}" stroke-width="1" />`;
+          gridHtml += `<text x="${padLeft - 8}" y="${(y + 3.5).toFixed(1)}" text-anchor="end"
+            fill="${isHighlight ? "#34d399" : "#71717a"}" font-size="10.5" font-family="ui-monospace, monospace">${pct}%</text>`;
+        });
+
+        // X-axis ticks (5 evenly spaced)
+        const xSteps = 4;
+        for (let i = 0; i <= xSteps; i++) {
+          const val = Math.round(exam.min + (i / xSteps) * (exam.max - exam.min));
+          const x = scoreToX(val, exam.min, exam.max);
+          gridHtml += `<line x1="${x.toFixed(1)}" y1="${padTop}" x2="${x.toFixed(1)}" y2="${height - padBottom}"
+            stroke="rgba(255,255,255,0.05)" stroke-width="1" />`;
+          gridHtml += `<text x="${x.toFixed(1)}" y="${height - 10}" text-anchor="middle"
+            fill="#71717a" font-size="10.5" font-family="ui-monospace, monospace">${val}</text>`;
+        }
+        els.svgGrid.innerHTML = gridHtml;
+
+        // 2. Sample points smoothly across [min, max] for crisp curve & difficulty band
+        const samples = 90;
+        const activePts = [];
+        const toughPts = [];
+        const easyPts = [];
+
+        for (let i = 0; i <= samples; i++) {
+          const s = exam.min + (i / samples) * (exam.max - exam.min);
+          const x = scoreToX(s, exam.min, exam.max);
+          const pActive = interpolatePercentile(s, activeCurve);
+          activePts.push([x, pctToY(pActive)]);
+
+          if (exam.hasDifficulty) {
+            const pTough = interpolatePercentile(s, exam.curves.tough);
+            const pEasy = interpolatePercentile(s, exam.curves.easy);
+            toughPts.push([x, pctToY(pTough)]);
+            easyPts.push([x, pctToY(pEasy)]);
+          }
+        }
+
+        // Active curve path
+        const lineD = activePts
+          .map((pt, idx) => `${idx === 0 ? "M" : "L"}${pt[0].toFixed(1)},${pt[1].toFixed(1)}`)
+          .join(" ");
+        els.svgCurve.setAttribute("d", lineD);
+
+        // Area fill under curve
+        const baseY = (padTop + plotH).toFixed(1);
+        const areaD = `${lineD} L${activePts[activePts.length - 1][0].toFixed(1)},${baseY} L${activePts[0][0].toFixed(1)},${baseY} Z`;
+        els.svgArea.setAttribute("d", areaD);
+
+        // Easy–Tough historical band
+        if (exam.hasDifficulty) {
+          const upper = toughPts
+            .map((pt, idx) => `${idx === 0 ? "M" : "L"}${pt[0].toFixed(1)},${pt[1].toFixed(1)}`)
+            .join(" ");
+          const lower = easyPts
+            .slice()
+            .reverse()
+            .map((pt) => `L${pt[0].toFixed(1)},${pt[1].toFixed(1)}`)
+            .join(" ");
+          els.svgBand.setAttribute("d", `${upper} ${lower} Z`);
+          els.bandLegend.classList.remove("hidden");
+        } else {
+          els.svgBand.setAttribute("d", "");
+          els.bandLegend.classList.add("hidden");
+        }
+
+        // 3. Glowing Current Score Marker & Crosshair
+        const cx = scoreToX(currentScore, exam.min, exam.max);
+        const cy = pctToY(currentPct);
+        const displayPct = formatPercentile(currentPct);
+        const displayScore = formatMarks(currentScore);
+
+        // Smart tooltip alignment so it never clips off the SVG edges
+        const labelW = 112;
+        let boxX = cx - labelW / 2;
+        if (boxX < padLeft + 2) boxX = padLeft + 2;
+        if (boxX + labelW > width - padRight - 2) boxX = width - padRight - labelW - 2;
+        const boxY = cy > padTop + 34 ? cy - 34 : cy + 14;
+
+        els.svgMarker.innerHTML = `
+          <line x1="${cx.toFixed(1)}" y1="${cy.toFixed(1)}" x2="${cx.toFixed(1)}" y2="${baseY}"
+            stroke="rgba(52, 211, 153, 0.45)" stroke-width="1.5" stroke-dasharray="3 3" />
+          <line x1="${padLeft}" y1="${cy.toFixed(1)}" x2="${cx.toFixed(1)}" y2="${cy.toFixed(1)}"
+            stroke="rgba(129, 140, 248, 0.35)" stroke-width="1" stroke-dasharray="3 3" />
+          <circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="10" fill="rgba(52, 211, 153, 0.22)" />
+          <circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="5.5" fill="#34d399" stroke="#ffffff" stroke-width="2" filter="url(#dotGlow)" />
+          <g transform="translate(${boxX.toFixed(1)}, ${boxY.toFixed(1)})">
+            <rect width="${labelW}" height="24" rx="6" fill="#09090b" fill-opacity="0.92" stroke="rgba(129, 140, 248, 0.55)" stroke-width="1" />
+            <text x="${labelW / 2}" y="15.5" text-anchor="middle" fill="#f4f4f5" font-size="11" font-weight="600" font-family="ui-monospace, monospace">
+              ${displayScore} → ${displayPct}%
+            </text>
+          </g>
+        `;
+      }
+
+      /* ========================================================================
+         6. Key Benchmarks Table Renderer
+         ======================================================================== */
+      function renderBenchmarks(exam, activeCurve, currentScore) {
+        els.benchmarksTitle.textContent = `${exam.name} Key Benchmarks`;
+
+        // Calculate required marks for each benchmark percentile
+        const rows = BENCHMARK_TARGETS.map((pct) => {
+          const rawMarks = interpolateMarks(pct, activeCurve);
+          const snappedMarks = clamp(snapToStep(rawMarks, exam.step), exam.min, exam.max);
+          return {
+            pct,
+            marks: snappedMarks,
+            distance: Math.abs(currentScore - snappedMarks)
+          };
+        });
+
+        // Identify the single closest benchmark row to user's current score
+        let closestIdx = 0;
+        let minDist = Infinity;
+        rows.forEach((row, idx) => {
+          if (row.distance < minDist) {
+            minDist = row.distance;
+            closestIdx = idx;
+          }
+        });
+
+        els.benchmarkList.innerHTML = rows
+          .map((row, idx) => {
+            const isClosest = idx === closestIdx;
+            const diff = currentScore - row.marks;
+            const absDiff = formatMarks(Math.abs(diff));
+            let diffText = "Exact";
+            let diffCls = "ahead";
+
+            if (diff > 0.001) {
+              diffText = `+${absDiff}`;
+              diffCls = "ahead";
+            } else if (diff < -0.001) {
+              diffText = `-${absDiff}`;
+              diffCls = "behind";
+            }
+
+            return `
+              <button type="button" class="benchmark-row ${isClosest ? "closest" : ""}" data-score="${row.marks}">
+                <span class="bm-pct">
+                  ${row.pct}%ile
+                  ${isClosest ? '<span class="bm-closest-tag">Nearest</span>' : ""}
+                </span>
+                <span class="bm-marks">${formatMarks(row.marks)} marks</span>
+                <span class="bm-diff ${diffCls}">${diffText}</span>
+              </button>
+            `;
+          })
+          .join("");
+      }
+
+      /* ========================================================================
+         7. Master UI Sync & Update
+         ======================================================================== */
+      function updateSliderTrack(score, min, max) {
+        const pct = ((score - min) / (max - min)) * 100;
+        els.scoreSlider.style.background = `linear-gradient(90deg, #6366f1 0%, #34d399 ${pct}%, #27272a ${pct}%, #27272a 100%)`;
+      }
+
+      function renderAll(updateInputField = true) {
+        try {
+          const exam = EXAMS[state.examKey];
+          const score = clamp(state.scores[state.examKey], exam.min, exam.max);
+          state.scores[state.examKey] = score;
+
+          const activeCurve = getActiveCurve(exam, state.difficulty);
+          const pct = interpolatePercentile(score, activeCurve);
+
+          // Update Hero Readout
+          els.resultExamLabel.textContent = `${exam.fullName} Estimated Percentile`;
+          els.percentileValue.textContent = formatPercentile(pct);
+
+          const tier = getTierInfo(pct);
+          els.tierBadge.textContent = tier.text;
+          els.tierBadge.className = `tier-badge ${tier.cls}`.trim();
+
+          // Historical Range (for CAT, XAT, SNAP, CET) or Fixed Curve Note (for NMAT)
+          if (exam.hasDifficulty) {
+            const pEasy = interpolatePercentile(score, exam.curves.easy);
+            const pTough = interpolatePercentile(score, exam.curves.tough);
+            const lowPct = Math.min(pEasy, pTough);
+            const highPct = Math.max(pEasy, pTough);
+
+            els.historicalRangeRow.innerHTML = `
+              <span>Historical range: <strong>${formatPercentile(lowPct)}% – ${formatPercentile(highPct)}%</strong> across easy/tough years</span>
+            `;
+          } else {
+            els.historicalRangeRow.innerHTML = `
+              <span class="range-pill">Fixed GMAC scaled score mapping &bull; 36–360 scale</span>
+            `;
+          }
+
+          // Update Input & Slider
+          if (updateInputField) {
+            els.scoreInput.value = formatMarks(score);
+          }
+          els.scoreSlider.value = score;
+          updateSliderTrack(score, exam.min, exam.max);
+
+          // Render Chart & Benchmarks
+          renderChart(exam, activeCurve, score, pct);
+          renderBenchmarks(exam, activeCurve, score);
+        } catch (err) {
+          console.error("Render error:", err);
+        }
+      }
+
+      /**
+       * Switch active exam and update all static exam metadata/controls.
+       */
+      function selectExam(examKey) {
+        if (!EXAMS[examKey]) return;
+        state.examKey = examKey;
+        const exam = EXAMS[examKey];
+
+        // Update Tab active states
+        els.examTabs.forEach((tab) => {
+          const isActive = tab.dataset.exam === examKey;
+          tab.classList.toggle("active", isActive);
+          tab.setAttribute("aria-selected", String(isActive));
+        });
+
+        // Update Input & Slider attributes
+        els.scoreInputLabel.textContent =
+          examKey === "NMAT"
+            ? "Enter Your NMAT Scaled Score"
+            : `Enter Your ${exam.name} Raw / Scaled Marks`;
+        els.scoreLimits.textContent = `Range: ${exam.min} to ${exam.max} (step ${exam.step})`;
+        els.scoreMaxTag.textContent = `/ ${exam.max}`;
+
+        els.scoreInput.min = exam.min;
+        els.scoreInput.max = exam.max;
+        els.scoreInput.step = exam.step;
+
+        els.scoreSlider.min = exam.min;
+        els.scoreSlider.max = exam.max;
+        els.scoreSlider.step = exam.step;
+
+        // Slider tick marks
+        const tickCount = 5;
+        let ticksHtml = "";
+        for (let i = 0; i < tickCount; i++) {
+          const v = Math.round(exam.min + (i / (tickCount - 1)) * (exam.max - exam.min));
+          ticksHtml += `<span>${v}</span>`;
+        }
+        els.sliderTicks.innerHTML = ticksHtml;
+
+        // Difficulty toggle vs NMAT badge
+        if (exam.hasDifficulty) {
+          els.difficultyLabel.textContent = "Paper Difficulty Assumption";
+          els.difficultyToggle.classList.remove("hidden");
+          els.nmatBadge.classList.add("hidden");
+        } else {
+          els.difficultyLabel.textContent = "Percentile Curve";
+          els.difficultyToggle.classList.add("hidden");
+          els.nmatBadge.classList.remove("hidden");
+        }
+
+        // Pattern & Source info
+        els.examPatternText.textContent = exam.pattern;
+        els.examSourceText.textContent = exam.source;
+        els.chartTitle.textContent = `${exam.name} Marks vs Percentile Curve`;
+
+        renderAll(true);
+      }
+
+      /* ========================================================================
+         8. Event Listeners
+         ======================================================================== */
+
+      // Exam Tabs
+      els.examTabs.forEach((tab) => {
+        tab.addEventListener("click", () => selectExam(tab.dataset.exam));
+      });
+
+      // Difficulty Toggle
+      els.segButtons.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          state.difficulty = btn.dataset.diff;
+          els.segButtons.forEach((b) => b.classList.toggle("active", b === btn));
+          renderAll(true);
+        });
+      });
+
+      // Numeric Input (live calculation as user types)
+      els.scoreInput.addEventListener("input", (e) => {
+        const raw = e.target.value.trim();
+        if (raw === "" || raw === "-" || raw === "." || raw === "-.") return;
+        const num = parseFloat(raw);
+        if (!Number.isNaN(num)) {
+          const exam = EXAMS[state.examKey];
+          state.scores[state.examKey] = clamp(num, exam.min, exam.max);
+          renderAll(false);
+        }
+      });
+
+      // Clamp and tidy numeric input on blur
+      els.scoreInput.addEventListener("blur", () => {
+        renderAll(true);
+      });
+
+      // Synced Range Slider
+      els.scoreSlider.addEventListener("input", (e) => {
+        const num = parseFloat(e.target.value);
+        if (!Number.isNaN(num)) {
+          state.scores[state.examKey] = num;
+          renderAll(true);
+        }
+      });
+
+      // Stepper +/- Buttons
+      function stepScore(direction) {
+        const exam = EXAMS[state.examKey];
+        const next = snapToStep(state.scores[state.examKey] + direction * exam.step, exam.step);
+        state.scores[state.examKey] = clamp(next, exam.min, exam.max);
+        renderAll(true);
+      }
+
+      els.btnDecrease.addEventListener("click", () => stepScore(-1));
+      els.btnIncrease.addEventListener("click", () => stepScore(1));
+
+      // Clickable Benchmark Rows (event delegation)
+      els.benchmarkList.addEventListener("click", (e) => {
+        const row = e.target.closest(".benchmark-row");
+        if (!row) return;
+        const targetScore = parseFloat(row.dataset.score);
+        if (!Number.isNaN(targetScore)) {
+          state.scores[state.examKey] = targetScore;
+          renderAll(true);
+        }
+      });
+
+      // Interactive SVG Curve Scrubbing (mouse + touch)
+      let isDraggingChart = false;
+
+      function updateScoreFromPointer(clientX) {
+        const rect = els.curveSvg.getBoundingClientRect();
+        if (!rect.width) return;
+        const exam = EXAMS[state.examKey];
+        const svgX = ((clientX - rect.left) / rect.width) * CHART.width;
+        const plotW = CHART.width - CHART.padLeft - CHART.padRight;
+        const ratio = clamp((svgX - CHART.padLeft) / plotW, 0, 1);
+        const rawScore = exam.min + ratio * (exam.max - exam.min);
+        state.scores[state.examKey] = clamp(snapToStep(rawScore, exam.step), exam.min, exam.max);
+        renderAll(true);
+      }
+
+      els.curveSvg.addEventListener("pointerdown", (e) => {
+        isDraggingChart = true;
+        els.curveSvg.setPointerCapture(e.pointerId);
+        updateScoreFromPointer(e.clientX);
+      });
+
+      els.curveSvg.addEventListener("pointermove", (e) => {
+        if (!isDraggingChart) return;
+        updateScoreFromPointer(e.clientX);
+      });
+
+      els.curveSvg.addEventListener("pointerup", () => {
+        isDraggingChart = false;
+      });
+
+      els.curveSvg.addEventListener("pointercancel", () => {
+        isDraggingChart = false;
+      });
+
+      /* ========================================================================
+         9. Initialize Default View (CAT)
+         ======================================================================== */
+      window.addEventListener("DOMContentLoaded", () => {
+        selectExam("CAT");
+      });
+    })();
+  </script>
+</body>
+</html>
